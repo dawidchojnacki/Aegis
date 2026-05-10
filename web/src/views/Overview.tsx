@@ -10,7 +10,7 @@ import {
   Cell,
 } from "recharts";
 import { api, Summary } from "../api";
-import { Card, Kpi, Pill, fmtCompactNum, fmtUsd, fmtMs, WindowSwitch, WindowDays } from "../ui";
+import { Card, Kpi, Pill, fmtCompactNum, fmtUsd, fmtMs, WindowDays } from "../ui";
 import { IconPulse, IconChart } from "../icons";
 
 const WINDOW_LABEL: Record<WindowDays, { hero: string; pill: string }> = {
@@ -23,8 +23,7 @@ const BAR_COLORS = ["#0a1628", "#1a3d6b", "#3a5a85", "#9a6f1f", "#b8893a", "#6b6
 
 const shortModel = (m: string) => m.split("/").pop() ?? m;
 
-export default function Overview() {
-  const [days, setDays] = useState<WindowDays>(7);
+export default function Overview({ days }: { days: WindowDays }) {
   const [data, setData] = useState<Summary | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -51,9 +50,6 @@ export default function Overview() {
 
   return (
     <div className="grid gap-3">
-      <div className="flex justify-end">
-        <WindowSwitch value={days} onChange={setDays} />
-      </div>
       {/* Hero */}
       <Card>
         <div className="grid md:grid-cols-[1.1fr_1fr] gap-6 items-center">

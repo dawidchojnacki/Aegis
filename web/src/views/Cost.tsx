@@ -11,11 +11,10 @@ import {
   Bar,
 } from "recharts";
 import { api, CostBreakdown } from "../api";
-import { Card, fmtUsd, fmtNum, WindowSwitch, WindowDays } from "../ui";
+import { Card, fmtUsd, fmtNum, WindowDays } from "../ui";
 import { IconCoin, IconChart } from "../icons";
 
-export default function Cost() {
-  const [days, setDays] = useState<WindowDays>(7);
+export default function Cost({ days }: { days: WindowDays }) {
   const [data, setData] = useState<CostBreakdown | null>(null);
   useEffect(() => {
     setData(null);
@@ -29,9 +28,6 @@ export default function Cost() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
-        <WindowSwitch value={days} onChange={setDays} />
-      </div>
       {!data ? (
         <Card title="Cost">Loading…</Card>
       ) : (

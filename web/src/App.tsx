@@ -3,6 +3,8 @@ import Overview from "./views/Overview";
 import Cost from "./views/Cost";
 import Anomalies from "./views/Anomalies";
 import Weekly from "./views/Weekly";
+import { WindowSwitch, WindowDays } from "./ui";
+import { generateReport } from "./report";
 
 type Tab = "overview" | "cost" | "anomalies" | "weekly";
 
@@ -15,6 +17,21 @@ const tabs: { id: Tab; label: string }[] = [
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("overview");
+  const [days, setDays] = useState<WindowDays>(7);
+  const [busy, setBusy] = useState(false);
+
+  const onDownload = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await generateReport(days);
+    } catch (e) {
+      console.error(e);
+      alert("Could not generate report. Check console.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-full max-w-6xl mx-auto px-6 py-4">
@@ -66,15 +83,41 @@ export default function App() {
         </div>
       </header>
 
-      {tab === "overview" && <Overview />}
-      {tab === "cost" && <Cost />}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <WindowSwitch value={days} onChange={setDays} />
+        <button
+          onClick={onDownload}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-ink bg-ink text-bg hover:bg-accent hover:text-ink hover:border-accent disabled:opacity-50 disabled:cursor-wait font-mono text-[10px] uppercase tracking-[0.18em] transition-all"
+          title="Download PDF usage report"
+        >
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path
+              d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {busy ? "Generating…" : "Download PDF report"}
+        </button>
+      </div>
+
+      {tab === "overview" && <Overview days={days} />}
+      {tab === "cost" && <Cost days={days} />}
       {tab === "anomalies" && <Anomalies />}
       {tab === "weekly" && <Weekly />}
 
       <footer className="mt-4 pt-3 border-t border-line flex items-center justify-between text-[10px] text-dim font-mono">
         <span>v0.1.0 · FastAPI + Postgres + React</span>
-        <a href="https://github.com/" className="hover:text-accent">
-          source ↗
+        <a
+          href="https://github.com/dawidchojnacki/Aegis"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-accent"
+        >
+          github.com/dawidchojnacki/Aegis ↗
         </a>
       </footer>
     </div>
