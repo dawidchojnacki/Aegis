@@ -56,9 +56,29 @@ async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await r.text();
+  if (!r.ok) {
+    let detail = text;
+    try {
+      const j = JSON.parse(text);
+      detail = j.detail ?? j.message ?? text;
+    } catch {}
+    throw new Error(`${r.status}: ${detail}`);
+  }
+  return text ? (JSON.parse(text) as T) : ({} as T);
+}
+
 export const api = {
   summary: (days = 7) => get<Summary>(`/v1/summary?days=${days}`),
   costBreakdown: (days = 7) => get<CostBreakdown>(`/v1/cost-breakdown?days=${days}`),
   anomalies: (limit = 100) => get<{ anomalies: Anomaly[] }>(`/v1/anomalies?limit=${limit}`),
   weekly: () => get<WeeklyReport>(`/v1/report/weekly`),
+  emailReport: (payload: { to: string; days: number; filename: string; pdf_base64: string }) =>
+    postJson<{ ok: boolean; id?: string }>(`/v1/report/email`, payload),
 };

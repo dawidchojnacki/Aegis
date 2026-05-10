@@ -14,13 +14,14 @@ import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import query, execute, pool
 from .models import TraceIn, BenchmarkRequest
 from .anomaly import detect_and_persist
 from . import benchmark as bench
+from .email_report import ReportEmailIn, send_report_email
 
 app = FastAPI(title="AEGIS API", version="0.1.0")
 
@@ -253,3 +254,8 @@ def weekly_report():
         "retrieval grounding before promoting to critical workloads.",
     ]
     return {"markdown": "\n".join(md), "generated_at": datetime.now(timezone.utc)}
+
+
+@app.post("/v1/report/email", status_code=200)
+async def email_report(body: ReportEmailIn, request: Request):
+    return await send_report_email(request, body)

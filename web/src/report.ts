@@ -300,10 +300,28 @@ export async function generateReport(days: WindowDays): Promise<void> {
     api.summary(days),
     api.costBreakdown(days),
   ]);
-  buildPdf(days, summary, breakdown);
+  const { pdf, filename } = buildPdf(days, summary, breakdown);
+  pdf.save(filename);
 }
 
-function buildPdf(days: WindowDays, s: Summary, b: CostBreakdown) {
+export async function buildReportPayload(
+  days: WindowDays
+): Promise<{ filename: string; base64: string }> {
+  const [summary, breakdown] = await Promise.all([
+    api.summary(days),
+    api.costBreakdown(days),
+  ]);
+  const { pdf, filename } = buildPdf(days, summary, breakdown);
+  const dataUri = pdf.output("datauristring");
+  const base64 = dataUri.slice(dataUri.indexOf(",") + 1);
+  return { filename, base64 };
+}
+
+function buildPdf(
+  days: WindowDays,
+  s: Summary,
+  b: CostBreakdown
+): { pdf: jsPDF; filename: string } {
   const pdf = new jsPDF({ unit: "mm", format: "a4", compress: true });
   const generatedAt = new Date();
   const totalPages = 2;
@@ -419,5 +437,5 @@ function buildPdf(days: WindowDays, s: Summary, b: CostBreakdown) {
   footer(pdf, 2, totalPages);
 
   const stamp = generatedAt.toISOString().slice(0, 10);
-  pdf.save(`aegis-report-${days}d-${stamp}.pdf`);
+  return { pdf, filename: `aegis-report-${days}d-${stamp}.pdf` };
 }

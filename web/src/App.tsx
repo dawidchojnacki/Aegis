@@ -5,6 +5,7 @@ import Anomalies from "./views/Anomalies";
 import Weekly from "./views/Weekly";
 import { WindowSwitch, WindowDays } from "./ui";
 import { generateReport } from "./report";
+import EmailReportModal from "./EmailReportModal";
 
 type Tab = "overview" | "cost" | "anomalies" | "weekly";
 
@@ -19,6 +20,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("overview");
   const [days, setDays] = useState<WindowDays>(7);
   const [busy, setBusy] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const onDownload = async () => {
     if (busy) return;
@@ -85,24 +87,39 @@ export default function App() {
 
       <div className="flex items-center justify-between gap-3 mb-3">
         <WindowSwitch value={days} onChange={setDays} />
-        <button
-          onClick={onDownload}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-ink bg-ink text-bg hover:bg-accent hover:text-ink hover:border-accent disabled:opacity-50 disabled:cursor-wait font-mono text-[10px] uppercase tracking-[0.18em] transition-all"
-          title="Download PDF usage report"
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
-            <path
-              d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {busy ? "Generating…" : "Download PDF report"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setEmailOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-line bg-panel text-ink hover:border-ink hover:bg-panel2 font-mono text-[10px] uppercase tracking-[0.18em] transition-all"
+            title="Email PDF report"
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <rect x="1.5" y="3" width="13" height="10" rx="1" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M2 4l6 5 6-5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+            </svg>
+            Email report
+          </button>
+          <button
+            onClick={onDownload}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-ink bg-ink text-bg hover:bg-accent hover:text-ink hover:border-accent disabled:opacity-50 disabled:cursor-wait font-mono text-[10px] uppercase tracking-[0.18em] transition-all"
+            title="Download PDF usage report"
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path
+                d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {busy ? "Generating…" : "Download PDF report"}
+          </button>
+        </div>
       </div>
+
+      <EmailReportModal open={emailOpen} days={days} onClose={() => setEmailOpen(false)} />
 
       {tab === "overview" && <Overview days={days} />}
       {tab === "cost" && <Cost days={days} />}
