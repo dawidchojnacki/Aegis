@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aegis}
+      POSTGRES_DB: aegis
+    volumes:
+      - aegis_db:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://aegis:${POSTGRES_PASSWORD:-aegis}@db:5432/aegis
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    networks:
+      - default
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=n8n-compose_default
+      - "traefik.http.routers.aegis-backend.rule=Host(`aegis.dawidc.pl`) && (PathPrefix(`/v1`) || PathPrefix(`/healthz`))"
+      - traefik.http.routers.aegis-backend.entrypoints=web,websecure
+      - traefik.http.routers.aegis-backend.tls=true
+      - traefik.http.routers.aegis-backend.tls.certresolver=myhttpchallenge
+      - traefik.http.routers.aegis-backend.priority=100
+      - traefik.http.services.aegis-backend.loadbalancer.server.port=8000
+
+  web:
+    build: ./web
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=n8n-compose_default
+      - "traefik.http.routers.aegis-web.rule=Host(`aegis.dawidc.pl`)"
+      - traefik.http.routers.aegis-web.entrypoints=web,websecure
+      - traefik.http.routers.aegis-web.tls=true
+      - traefik.http.routers.aegis-web.tls.certresolver=myhttpchallenge
+      - traefik.http.routers.aegis-web.priority=1
+      - traefik.http.services.aegis-web.loadbalancer.server.port=80
+
+volumes:
+  aegis_db:
+
+networks:
+  traefik:
+    name: n8n-compose_default
+    external: true
